@@ -1,0 +1,31 @@
+name: Build Unsigned IPA
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode Project
+        run: xcodegen generate
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project XiangqiPiP.xcodeproj \
+            -scheme XiangqiPiP \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath build/XiangqiPiP.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R build/XiangqiPiP.xcarchive/Products/Applications/XiangqiPiP.app build/Payload/
+          cd build && zip -r XiangqiPiP.ipa Payload
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: XiangqiPiP-unsigned
+          path: build/XiangqiPiP.ipa
